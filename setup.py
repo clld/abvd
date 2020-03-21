@@ -19,6 +19,7 @@ setup(
     zip_safe=False,
     install_requires=[
         'clld>=6.0.1',
+        'clld-cognacy-plugin',
         'clldmpg>=3.5',
         'sqlalchemy',
         'waitress',
