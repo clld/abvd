@@ -3,7 +3,7 @@ import re
 from collections import defaultdict, Counter
 
 from sqlalchemy.orm import joinedload
-from clld.scripts.util import Data, bibtex2source, add_language_codes
+from clld.cliutil import Data, add_language_codes
 from clld.db.meta import DBSession
 from clld.db.models import common
 from clld.lib import bibtex

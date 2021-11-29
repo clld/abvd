@@ -18,9 +18,9 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=[
-        'clld>=6.0.1',
+        'clld>=8',
+        'clldmpg>=4.2',
         'clld-cognacy-plugin',
-        'clldmpg>=3.5',
         'sqlalchemy',
         'waitress',
     ],
