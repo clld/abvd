@@ -12,8 +12,6 @@
     % endfor
 </ul>
 
-${request.get_datatable('values', h.models.Value, language=ctx).render()}
-
 <%def name="sidebar()">
     ${util.language_meta()}
 </%def>

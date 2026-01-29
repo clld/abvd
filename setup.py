@@ -23,6 +23,7 @@ setup(
         'clld-cognacy-plugin',
         'sqlalchemy',
         'waitress',
+        'setuptools<81',
     ],
     extras_require={
         'dev': [

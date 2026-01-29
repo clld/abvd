@@ -27,7 +27,7 @@ class ABVDMapMarker(MapMarker):
             return self.__call__(ctx.language, req)
 
         if interfaces.IValueSet.providedBy(ctx):
-            icon = ctx.languagee.jsondata['icon']
+            icon = ctx.language.jsondata['icon']
 
         if interfaces.IValue.providedBy(ctx):
             return self.__call__(ctx.valueset, req)
@@ -41,6 +41,12 @@ class ABVDMapMarker(MapMarker):
 def main(global_config, **settings):
     """ This function returns a Pyramid WSGI application.
     """
+    settings['route_patterns'] = {
+        'languages': r'/austronesian/language.php',
+        'contribution': r'/austronesian/language.php/{id:[^/\.]+}',
+        'parameters': r'/austronesian/word.php',
+        'parameter': r'/austronesian/word.php/{id:[^/\.]+}',
+    }
     config = Configurator(settings=settings)
     config.include('clldmpg')
     config.include('clld_cognacy_plugin')

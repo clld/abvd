@@ -5,8 +5,18 @@
 <%def name="sidebar()">
     <div class="well well-small">
         <dl>
+            <dt>Language:</dt>
+            <dd>${h.link(req, ctx.language)}</dd>
             <dt>Author:</dt>
             <dd>${ctx.description}</dd>
+            % if ctx.notes:
+            <dt>Notes:</dt>
+            <dd>
+                % for p in ctx.notes.split('\n\n'):
+                <p>${p}</p>
+                % endfor
+            </dd>
+            % endif
             <dt>Typed by:</dt>
             <dd>
                 <ul class="unstyled inline">

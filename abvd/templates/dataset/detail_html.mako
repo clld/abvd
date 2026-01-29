@@ -20,8 +20,14 @@
 </blockquote>
 
 <p class="lead">
-    Kia Ora!
+    <strong>Kia Ora!</strong>
 </p>
+
+<div class="alert-info alert">
+    <div style="width: 100%; text-align: center;">
+        Random Word: ${h.link(req, word)} ("${h.link(req, word.valueset.parameter)}" in ${h.link(req, word.valueset.language)})
+    </div>
+</div>
 
 <p>
     This database contains ${'{:,}'.format(vcount)} lexical items from
