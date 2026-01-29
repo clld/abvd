@@ -18,8 +18,6 @@ from clld.db.models.common import Contribution, Language, Value, Parameter
 
 from clld_glottologfamily_plugin.models import HasFamilyMixin
 
-from abvd.models import Variety
-
 
 #-----------------------------------------------------------------------------
 # specialized common mapper classes
@@ -57,5 +55,5 @@ class Variety(CustomModelMixin, Language, HasFamilyMixin):
     glottocode = Column(Unicode)
     count_wordlists = Column(Integer)
     level = Column(Unicode)
-    parent_language_pk = Column(Integer, ForeignKey('language.pk'))
-    parent_language = relationship(Variety, backref='dialects', foreign_keys=[parent_language_pk])
+    parent_language_pk = Column(Integer, ForeignKey('variety.pk'))
+    parent_language = relationship('Variety', backref='dialects', foreign_keys=[parent_language_pk])
