@@ -7,6 +7,7 @@ from clld.web.datatables.parameter import Parameters
 from clld.web.datatables.contribution import Contributions, ContributorsCol
 from clld.db.util import get_distinct_values
 from clld.db.models import common
+from clld.db.meta import DBSession
 from clld.web.util.htmllib import HTML, literal
 from clld.web.util.helpers import icon
 from clld_glottologfamily_plugin.models import Family
@@ -51,6 +52,12 @@ class Words(Values):
                         model_col=common.Language.name,
                         get_object=lambda i: i.valueset.language),
                 name_col,
+                #
+                # FIXME: Add cognacy col!
+                #
+                Col(self, 'cognacy', model_col=Word.cognacy,
+                    choices=sorted((c for c, in DBSession.query(Word.cognacy).join(common.ValueSet).filter(common.ValueSet.parameter_pk == self.parameter.pk).distinct() if c))
+                    ),
                 LinkToMapCol(self, 'm', get_object=lambda i: i.valueset.language),
             ]
 

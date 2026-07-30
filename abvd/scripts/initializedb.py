@@ -107,7 +107,7 @@ def main(args):
         license='https://creativecommons.org/licenses/by/4.0/',
         contact='',
         jsondata={
-            'doi': input('doi: '),
+            'doi': '10.5281/zenodo.21703382',
             'license_icon': 'cc-by.png',
             'license_name': 'Creative Commons Attribution 4.0 International License'})
     DBSession.add(dataset)
@@ -161,7 +161,10 @@ def main(args):
             description=lang['author'],
             language=l,
             notes=lang['notes'],
-            problems=lang['problems'],
+            #
+            # FIXME: must add "problems" col to CLDF dataset!
+            #
+            #problems=lang['problems'],
         )
         i = 0
         typers = [n.strip() for n in (lang['typedby'] or '').split(' and ') if n.strip()]
@@ -213,7 +216,8 @@ def main(args):
             id=row['ID'],
             name=row['Form'],
             valueset=vs,
-            cognacy=row['Cognacy'],
+            # FIXME: normalize: remove whitespace!
+            cognacy=row['Cognacy'].replace(' ', ''),
             loan=row['Loan'],
             comment=row['Comment'],
         )

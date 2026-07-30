@@ -1,13 +1,19 @@
 from clld.web.maps import ParameterMap, Map, Layer, Legend
 from clld.web.util.htmllib import HTML, literal
+from clldutils.misc import data_url
+from clldutils.svg import icon
+from clld_cognacy_plugin.maps import CognatesetMap
 
-#
-# FIXME: add family legend to languages map!
-# allow deeper zoom on language map
-#
+
+class CogsetMap(CognatesetMap):
+    def get_options(self):
+        return {'max_zoom': 15}
 
 
 class LanguagesMap(Map):
+    def get_options(self):
+        return {'max_zoom': 15}
+
     def get_legends(self):
         def val(label, ico):
             return HTML.label(

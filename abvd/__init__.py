@@ -5,6 +5,7 @@ from clldutils import svg
 
 # we must make sure custom models are known at database initialization!
 from abvd import models
+from abvd import maps
 
 
 _ = lambda s: s
@@ -50,5 +51,6 @@ def main(global_config, **settings):
     config = Configurator(settings=settings)
     config.include('clldmpg')
     config.include('clld_cognacy_plugin')
+    config.register_map('cognateset', maps.CogsetMap)
     config.registry.registerUtility(ABVDMapMarker(), interfaces.IMapMarker)
     return config.make_wsgi_app()
