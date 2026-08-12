@@ -7,17 +7,26 @@
         <dl>
             <dt>Language:</dt>
             <dd>${h.link(req, ctx.language)}</dd>
-            <dt>Author:</dt>
+             % if ctx.language.family:
+            <dt>Family:</dt>
+            <dd>${ctx.language.family}</dd>
+            % endif
+            <dt>Author/Sources:</dt>
+            % if ctx.description:
             <dd>${ctx.description}</dd>
+            % endif
+            % for ref in ctx.references:
+            <dd>${h.link(req, ref.source)}</dd>
+            % endfor
             % if ctx.notes:
             <dt>Notes:</dt>
-            <dd>
-                % for p in ctx.notes.split('\n\n'):
-                <p>${p}</p>
-                % endfor
-            </dd>
+            <dd>${ctx.notes|n}</dd>
             % endif
-            <dt>Typed by:</dt>
+            % if ctx.problems:
+            <dt>Problems:</dt>
+            <dd>${ctx.problems|n}</dd>
+            % endif
+            <dt>Contributed by:</dt>
             <dd>
                 <ul class="unstyled inline">
                     % for ca in ctx.contributor_assocs:

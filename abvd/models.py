@@ -14,9 +14,10 @@ from sqlalchemy.ext.hybrid import hybrid_property
 
 from clld import interfaces
 from clld.db.meta import Base, CustomModelMixin
-from clld.db.models.common import Contribution, Language, Value, Parameter
+from clld.db.models.common import Contribution, Language, Value, Parameter, IdNameDescriptionMixin
 
 from clld_glottologfamily_plugin.models import HasFamilyMixin
+from clld_cognacy_plugin.models import Cognateset, Cognate as BaseCognate
 
 
 #-----------------------------------------------------------------------------
@@ -47,6 +48,7 @@ class Word(CustomModelMixin, Value):
     cognacy = Column(Unicode)
     loan = Column(Unicode)
     comment = Column(Unicode)
+    cs_ids = Column(Unicode)
 
 
 @implementer(interfaces.ILanguage)

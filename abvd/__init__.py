@@ -2,10 +2,13 @@ from pyramid.config import Configurator
 from clld import interfaces
 from clld.web.icon import MapMarker
 from clldutils import svg
+from clld_cognacy_plugin.models import Cognate
+from clld_cognacy_plugin.interfaces import ICognate
 
 # we must make sure custom models are known at database initialization!
 from abvd import models
 from abvd import maps
+from abvd import datatables
 
 
 _ = lambda s: s
@@ -51,6 +54,10 @@ def main(global_config, **settings):
     config = Configurator(settings=settings)
     config.include('clldmpg')
     config.include('clld_cognacy_plugin')
+
+    config.register_resource('cognate', Cognate, ICognate, with_index=True)
+    config.register_datatable('cognates', datatables.ABVDCognates)
+
     config.register_map('cognateset', maps.CogsetMap)
     config.registry.registerUtility(ABVDMapMarker(), interfaces.IMapMarker)
     return config.make_wsgi_app()

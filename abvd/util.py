@@ -14,6 +14,11 @@ from clld.db.models import common
 from abvd import models
 
 
+#def cognateset_detail_html(**kw):
+#    from clld_cognacy_plugin.models import Cognate
+#    return {'cognate_cls': Cognate}
+
+
 def dataset_detail_html(**kw):
     return dict(
         lcount=DBSession.query(common.Language).count(),

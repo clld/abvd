@@ -3,7 +3,7 @@ import re
 from collections import defaultdict, Counter
 
 from sqlalchemy.orm import joinedload
-from clld.cliutil import Data, add_language_codes
+from clld.cliutil import Data, add_language_codes, bibtex2source
 from clld.db.meta import DBSession
 from clld.db.models import common
 from clld.lib import bibtex
@@ -14,10 +14,15 @@ from clld_cognacy_plugin.models import Cognate, Cognateset
 from nameparser import HumanName
 from clld_glottologfamily_plugin.util import load_families
 from pyglottolog import Glottolog
+from markdown import markdown
 
 import abvd
 from abvd import models
 
+GEO = {
+    'Fijian (Ba; Nakoroboya)': '-17.65° S, 177.80',
+    "Red Ston": "linked to tasi1237 in Vanuatu Voices",
+}
 
 WORD_NOTES = {
     "8": ("to turn", "veer to the side, as in turning left"),
@@ -83,6 +88,12 @@ WORD_NOTES = {
 WORD_NOTES = {k: v[1] for k, v in WORD_NOTES.items()}
 
 
+def md(s):
+    if not s:
+        return ''
+    return markdown(s, extensions=['tables'])
+
+
 def contributor(data, n):
     name = HumanName(n)
     kw = dict(
@@ -101,7 +112,7 @@ def main(args):
     dataset = common.Dataset(
         id=abvd.__name__,
         name='ABVD',
-        description='',
+        description='Austronesian Basic Vocabulary Database',
         domain='abvd.clld.org',
         published=date.today(),
         license='https://creativecommons.org/licenses/by/4.0/',
@@ -115,19 +126,18 @@ def main(args):
     for name in ['Simon Greenhill', 'Robert Blust', 'Russell Gray']:
         common.Editor(contributor=contributor(data, name), dataset=dataset)
 
+    for rec in bibtex.Database.from_file(args.cldf.bibpath, lowercase=True):
+        data.add(common.Source, rec.id, _obj=bibtex2source(rec))
+
     cnames = Counter()
     families = Counter([l['Family'] for l in args.cldf['LanguageTable']])
     colors = dict(
         zip([i[0] for i in families.most_common()], color.qualitative_colors(len(families))))
     cid2l = {}
-    #
-    # FIXME: add sources!
-    #
-    # White Lolo: mant1265
-    # Gaokujiao Lolo: maan1239
-    #
     glangs = {lg.id: lg for lg in Glottolog(args.glottolog).languoids()}
+    wordlists = {r['ID']: r for r in args.cldf['ContributionTable']}
     for lang in args.cldf['LanguageTable']:
+        wl = wordlists[lang['ID']]
         lid = lang['Glottocode'] or lang['ID']
         l = data['Variety'].get(lid)
         if not l:
@@ -150,25 +160,22 @@ def main(args):
                     data, l, isocode=lang['ISO639P3code'], glottocode=lang['Glottocode'])
 
         cid2l[lang['ID']] = l
-        cname = '{0} ({1})'.format(lang['Name'], lang['author'])
+        cname = '{0} ({1})'.format(lang['Name'], wl['Source_Comment'])
         cnames.update([cname])
         if cnames[cname] > 1:
-            cname += ' {0}'.format(cnames[cname])
+            cname += f' {cnames[cname]}'
         c = data.add(
             models.Wordlist, lang['ID'],
             id=lang['ID'],
             name=cname,
-            description=lang['author'],
+            description=wl['Source_Comment'],
             language=l,
-            notes=lang['notes'],
-            #
-            # FIXME: must add "problems" col to CLDF dataset!
-            #
-            #problems=lang['problems'],
+            notes=md(wl['Description']),
+            problems=md(wl['problems']),
         )
         i = 0
-        typers = [n.strip() for n in (lang['typedby'] or '').split(' and ') if n.strip()]
-        checkers = [n.strip() for n in (lang['checkedby'] or '').split(' and ') if n.strip()]
+        typers = [n.strip() for n in (wl['Contributor'] or '').split(' and ') if n.strip()]
+        checkers = [n.strip() for n in (wl['checkedby'] or '').split(' and ') if n.strip()]
         for name in typers:
             i += 1
             DBSession.add(common.ContributionContributor(
@@ -187,6 +194,8 @@ def main(args):
                 ord=i,
                 jsondata=dict(type='checkedby'),
             ))
+        for sid in wl['Source']:
+            common.ContributionReference(contribution=c, source=data['Source'][sid])
 
     for param in args.cldf['ParameterTable']:
         data.add(
@@ -198,8 +207,9 @@ def main(args):
             id_int=int(param['ID'].split('_')[0]),
         )
 
-    vsrs = set()
+    f2c = {}
     for row in args.cldf['FormTable']:
+        f2c[row['ID']] = data['Concept'][row['Parameter_ID']].name
         vs = data['ValueSet'].get((row['Language_ID'], row['Parameter_ID']))
         if not vs:
             vs = data.add(
@@ -217,15 +227,18 @@ def main(args):
             name=row['Form'],
             valueset=vs,
             # FIXME: normalize: remove whitespace!
-            cognacy=row['Cognacy'].replace(' ', ''),
+            cognacy=row['Cognacy'].replace(' ', '') if row['Cognacy'] else None,
             loan=row['Loan'],
             comment=row['Comment'],
         )
 
     for row in args.cldf['CognateTable']:
+        concept = f2c[row['Form_ID']]
         cc = data['Cognateset'].get(row['Cognateset_ID'])
         if not cc:
-            cc = data.add(Cognateset, row['Cognateset_ID'], id=row['Cognateset_ID'])
+            cc = data.add(
+                Cognateset, row['Cognateset_ID'],
+                id=row['Cognateset_ID'], name=f'{concept} {row["Cognateset_ID"].split("-")[-1]}')
         data.add(
             Cognate,
             row['ID'],
@@ -257,3 +270,6 @@ def prime_cache(args):
 
     for c in DBSession.query(models.Concept).options(joinedload(common.Parameter.valuesets).joinedload(common.ValueSet.values)):
         c.count_wordlists = len(c.valuesets)
+
+    for w in DBSession.query(models.Word).options(joinedload(models.Word.cognates), joinedload(models.Word.cognates, Cognate.cognateset)):
+        w.cs_ids = ' '.join(f'-{cog.cognateset.id.split("-")[-1]}-' for cog in w.cognates)

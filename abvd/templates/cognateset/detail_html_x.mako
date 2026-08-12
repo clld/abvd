@@ -13,14 +13,9 @@
 ${(map_ or request.map).render()}
 % endif
 
-<table class="table">
-    <tbody>
-    % for co in ctx.cognates:
-    <tr>
-        <td>${h.link(request, co.counterpart.valueset.language)}</td>
-        <td>${h.link(request, co.counterpart.valueset.contribution)}</td>
-        <td>${h.link(request, co.counterpart)}</td>
-    </tr>
-    % endfor
-    </tbody>
-</table>
+<% dt = request.get_datatable('cognates', cognate_cls, cognateset=ctx) %>
+% if dt:
+<div>
+    ${dt.render()}
+</div>
+% endif
