@@ -1,8 +1,8 @@
+import mimetypes
 from datetime import date
-import re
-from collections import defaultdict, Counter
+from collections import Counter
 
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, aliased
 from clld.cliutil import Data, add_language_codes, bibtex2source
 from clld.db.meta import DBSession
 from clld.db.models import common
@@ -15,77 +15,10 @@ from nameparser import HumanName
 from clld_glottologfamily_plugin.util import load_families
 from pyglottolog import Glottolog
 from markdown import markdown
+from csvw import metadata
 
 import abvd
 from abvd import models
-
-GEO = {
-    'Fijian (Ba; Nakoroboya)': '-17.65° S, 177.80',
-    "Red Ston": "linked to tasi1237 in Vanuatu Voices",
-}
-
-WORD_NOTES = {
-    "8": ("to turn", "veer to the side, as in turning left"),
-    "13": ("back", "body part"),
-    "26": ("hair", "of the head"),
-    "38": ("to chew", "A: general term; B: chew betel"),
-    "39": ("to cook", "A: general term; B: boil food"),
-    "49": ("to lie down", "to sleep"),
-    "67": ("to sew", "clothing"),
-    "69": ("to hunt", "for game"),
-    "70": ("to shoot", "an arrow"),
-    "72": ("to hit", "with stick, club"),
-    "77": ("to scratch", "an itch"),
-    "78": ("to cut, hack", "wood"),
-    "80": ("to split", "transitive"),
-    "83": ("to work", "in garden, field"),
-    "86": ("to grow", "intransitive"),
-    "87": ("to swell", "as an abcess"),
-    "88": ("to squeeze", "as juice from a fruit"),
-    "89": ("to hold", "in the fist"),
-    "93": ("to pound, beat", "as rice or prepared food"),
-    "94": ("to throw", "as a stone"),
-    "95": ("to fall", "as a fruit"),
-    "108": ("louse", "A: general term, B: head louse"),
-    "112": ("rotten", "of food, or corpse"),
-    "113": ("branch", "the branch itself, not the fork of the branch"),
-    "122": ("water", "fresh water"),
-    "131": ("cloud", "white cloud, not a rain cloud"),
-    "137": ("to blow", "A: of the wind, B: with the mouth"),
-    "138": ("warm", "of weather"),
-    "139": ("cold", "of weather"),
-    "140": ("dry", "A: general term, B: to dry up"),
-    "144": ("to burn", "transitive"),
-    "145": ("smoke", "of a fire"),
-    "154": ("short", "A: in height, B: in length"),
-    "155": ("long", "of objects"),
-    "156": ("thin", "of objects"),
-    "157": ("thick", "of objects"),
-    "162": ("old", "of people"),
-    "170": ("when?", "question"),
-    "171": ("to hide", "intransitive"),
-    "172": ("to climb", "A: ladder, B: mountain"),
-    "181": ("where?", "question"),
-    "185": ("we", "A: inclusive, B: exclusive"),
-    "188": ("what?", "question"),
-    "189": ("who?", "question"),
-    "194": ("how?", "question"),
-    "197": ("One", "1"),
-    "198": ("Two", "2"),
-    "199": ("Three", "3"),
-    "200": ("Four", "4"),
-    "201": ("Five", "5"),
-    "202": ("Six", "6"),
-    "203": ("Seven", "7"),
-    "204": ("Eight", "8"),
-    "205": ("Nine", "9"),
-    "206": ("Ten", "10"),
-    "207": ("Twenty", "20"),
-    "208": ("Fifty", "50"),
-    "209": ("One Hundred", "100"),
-    "210": ("One Thousand", "1,000"),
-}
-WORD_NOTES = {k: v[1] for k, v in WORD_NOTES.items()}
 
 
 def md(s):
@@ -123,6 +56,15 @@ def main(args):
             'license_name': 'Creative Commons Attribution 4.0 International License'})
     DBSession.add(dataset)
 
+    about, url_map = None, {}
+    for row in args.cldf['MediaTable']:
+        if row['Name'] == 'our_research.md':
+            about = (args.cldf.directory / row['Download_URL'].unsplit()).read_text(encoding='utf8')
+        else:
+            url_map[row['Name']] = (f"https://s3.nexus.mpcdf.mpg.de/eva-dlce-abvd/"
+                                    f"{row['ID']}{mimetypes.guess_extension(row['Media_Type'])}")
+    DBSession.add(common.Config(key='about', value=about, jsondata=url_map))
+
     for name in ['Simon Greenhill', 'Robert Blust', 'Russell Gray']:
         common.Editor(contributor=contributor(data, name), dataset=dataset)
 
@@ -135,41 +77,39 @@ def main(args):
         zip([i[0] for i in families.most_common()], color.qualitative_colors(len(families))))
     cid2l = {}
     glangs = {lg.id: lg for lg in Glottolog(args.glottolog).languoids()}
-    wordlists = {r['ID']: r for r in args.cldf['ContributionTable']}
-    for lang in args.cldf['LanguageTable']:
-        wl = wordlists[lang['ID']]
-        lid = lang['Glottocode'] or lang['ID']
-        l = data['Variety'].get(lid)
-        if not l:
-            glang = glangs.get(lang['Glottocode'])
-            # if Proto in name -> language, otherwise -> dialect
-            l = data.add(
-                models.Variety, lid,
-                id=lid,
-                name=glang.name if glang else lang['Name'],
-                latitude=lang['Latitude'],
-                longitude=lang['Longitude'],
-                glottocode=lang['Glottocode'],
-                jsondata=dict(
-                    family=lang['Family'],
-                    icon='{0}{1}'.format('c' if lang['Family'] else 't', colors[lang['Family']]),
-                ),
-            )
-            if lang['Glottocode'] or lang['ISO639P3code']:
-                add_language_codes(
-                    data, l, isocode=lang['ISO639P3code'], glottocode=lang['Glottocode'])
 
-        cid2l[lang['ID']] = l
-        cname = '{0} ({1})'.format(lang['Name'], wl['Source_Comment'])
+    for lang in args.cldf['LanguageTable']:
+        glang = glangs.get(lang['Glottocode'])
+        # if Proto in name -> language, otherwise -> dialect
+        l = data.add(
+            models.Variety, lang['ID'],
+            id=lang['ID'],
+            name=glang.name if glang else lang['Name'],
+            latitude=lang['Latitude'],
+            longitude=lang['Longitude'],
+            glottocode=lang['Glottocode'],
+            jsondata=dict(
+                family=lang['Family'],
+                icon=f"{'c' if lang['Family'] else 't'}{colors[lang['Family']]}",
+            ),
+        )
+        if lang['Glottocode'] or lang['ISO639P3code']:
+            add_language_codes(
+                data, l, isocode=lang['ISO639P3code'], glottocode=lang['Glottocode'])
+
+    for wl in args.cldf['ContributionTable']:
+        lid = wl['Language_ID']
+        cid2l[wl['ID']] = data['Variety'][lid]
+        cname = f"{wl['Name']} ({wl['Source_Comment']})"
         cnames.update([cname])
         if cnames[cname] > 1:
             cname += f' {cnames[cname]}'
         c = data.add(
-            models.Wordlist, lang['ID'],
-            id=lang['ID'],
+            models.Wordlist, wl['ID'],
+            id=wl['ID'],
             name=cname,
             description=wl['Source_Comment'],
-            language=l,
+            language=cid2l[wl['ID']],
             notes=md(wl['Description']),
             problems=md(wl['problems']),
         )
@@ -202,7 +142,7 @@ def main(args):
             models.Concept, param['ID'],
             id=param['ID'],
             name=param['Name'],
-            description=WORD_NOTES.get(param['ID'].split('_')[0]),
+            description=param['Comment'],
             category=param['Category'],
             id_int=int(param['ID'].split('_')[0]),
         )
@@ -229,6 +169,7 @@ def main(args):
             # FIXME: normalize: remove whitespace!
             cognacy=row['Cognacy'].replace(' ', '') if row['Cognacy'] else None,
             loan=row['Loan'],
+            loan_doubt='?' in (row['Loan_Raw'] or ''),
             comment=row['Comment'],
         )
 
@@ -264,6 +205,7 @@ def prime_cache(args):
     for lg in DBSession.query(models.Wordlist).options(joinedload(common.Contribution.valuesets).joinedload(common.ValueSet.values)):
         lg.count_concepts = len(lg.valuesets)
         lg.count_words = sum(len(vs.values) for vs in lg.valuesets)
+        lg.count_loans = sum(1 if v.loan else 0 for vs in lg.valuesets for v in vs.values)
 
     for lg in DBSession.query(models.Variety).options(joinedload(models.Variety.wordlists)):
         lg.count_wordlists = len(lg.wordlists)
@@ -272,4 +214,4 @@ def prime_cache(args):
         c.count_wordlists = len(c.valuesets)
 
     for w in DBSession.query(models.Word).options(joinedload(models.Word.cognates), joinedload(models.Word.cognates, Cognate.cognateset)):
-        w.cs_ids = ' '.join(f'-{cog.cognateset.id.split("-")[-1]}-' for cog in w.cognates)
+        w.cs_ids = ' '.join(f'{cog.cognateset.id}-{"?" if cog.doubt else ""}' for cog in w.cognates)

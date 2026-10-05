@@ -22,6 +22,15 @@
             <dt>Notes:</dt>
             <dd>${ctx.notes|n}</dd>
             % endif
+            <dt>Statistics:</dt>
+            <dd>
+                <table class="table table-condensed table-nonfluid">
+                    <tr><th>Total Data:</th><td>&nbsp;</td><td class="right">${ctx.count_words}</td></tr>
+                    <tr><th>Number of Retentions:</th><td>${h.link(req, pmp, label='Proto Malayo-Polynesian')}:</td><td class="right">${pmp_retentions}</td></tr>
+                    <tr><th>&nbsp;</th><td>${h.link(req, poc, label='Proto Oceanic')}:</td><td class="right">${poc_retentions}</td></tr>
+                    <tr><th>Number of Loans:</th><td>&nbsp;</td><td class="right">${ctx.count_loans}</td></tr>
+                </table>
+            </dd>
             % if ctx.problems:
             <dt>Problems:</dt>
             <dd>${ctx.problems|n}</dd>

@@ -87,6 +87,16 @@ class CognacyCol(Col):
         return icontains(Word.cs_ids, f'-{qs.split()[0]}-')
 
 
+class CognacyInWordlistCol(Col):
+    __kw__ = dict(bSortable=False, bSearchable=False)
+
+    def format(self, item):
+        #
+        # FIXME: add links!
+        #
+        return ', '.join(''.join(i.split('-')[-2:]) for i in item.cs_ids.split())
+
+
 class Words(Values):
     def base_query(self, query):
         query = Values.base_query(self, query)
@@ -116,7 +126,6 @@ class Words(Values):
 
         if self.contribution:
             return res + [
-                # FIXME: add info with description to parameter col
                 ConceptIdCol(
                     self,
                     'id_int',
@@ -131,10 +140,11 @@ class Words(Values):
                 ),
                 name_col,
                 Col(self, 'comment', model_col=Word.comment, sTitle='Annotation:'),
+                CognacyInWordlistCol(self, 'cognacy', model_col=Word.cs_ids),
                 Col(self,
                     'loan',
                     model_col=Word.loan,
-                    format=lambda i: 'L' if i.loan != 'false' else '',
+                    format=lambda i: f"{'L' if i.loan else ''}{'?' if i.loan_doubt else ''}",
                     sTitle='Loan:'),
             ]
 

@@ -40,13 +40,15 @@ class Wordlist(CustomModelMixin, Contribution):
     problems = Column(Unicode)
     count_concepts = Column(Integer)
     count_words = Column(Integer)
+    count_loans = Column(Integer)
 
 
 @implementer(interfaces.IValue)
 class Word(CustomModelMixin, Value):
     pk = Column(Integer, ForeignKey('value.pk'), primary_key=True)
     cognacy = Column(Unicode)
-    loan = Column(Unicode)
+    loan = Column(Boolean)
+    loan_doubt = Column(Boolean)
     comment = Column(Unicode)
     cs_ids = Column(Unicode)
 
