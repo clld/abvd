@@ -57,6 +57,7 @@ def main(global_config, **settings):
     config.include('clldmpg')
     config.include('clld_cognacy_plugin')
     config.add_301('/bantu', 'https://doi.org/10.5281/zenodo.1295832')
+    config.add_301('/austronesian', '/')
 
     config.register_resource('cognate', Cognate, ICognate, with_index=True)
     config.register_datatable('cognates', datatables.ABVDCognates)
