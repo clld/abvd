@@ -5,6 +5,7 @@ from clld.web.datatables.value import Values, ValueNameCol
 from clld.web.datatables.language import Languages
 from clld.web.datatables.parameter import Parameters
 from clld.web.datatables.contribution import Contributions, ContributorsCol
+from clld.web.datatables.contributor import Contributors
 from clld.db.util import get_distinct_values, icontains
 from clld.db.models import common
 from clld.db.meta import DBSession
@@ -220,8 +221,17 @@ class Wordlists(Contributions):
         ]
 
 
+class Collaborators(Contributors):
+    def base_query(self, query):
+        return query.options(
+            joinedload(common.Contributor.contribution_assocs),
+            joinedload(common.Contributor.contribution_assocs, common.ContributionContributor.contribution),
+        )
+
+
 def includeme(config):
     config.register_datatable('contributions', Wordlists)
+    config.register_datatable('contributors', Collaborators)
     config.register_datatable('values', Words)
     config.register_datatable('parameters', Concepts)
     config.register_datatable('languages', Varieties)
