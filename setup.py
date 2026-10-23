@@ -24,7 +24,7 @@ setup(
         'clld-glottologfamily-plugin',
         'sqlalchemy',
         'waitress',
-        'setuptools<81',
+        'setuptools<84',
     ],
     extras_require={
         'dev': [
