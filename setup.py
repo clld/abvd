@@ -19,7 +19,7 @@ setup(
     zip_safe=False,
     install_requires=[
         'clld>=9.2.1',
-        'clldmpg>=4.2',
+        'clldmpg>=4.5',
         'clld-cognacy-plugin>=1.0',
         'clld-glottologfamily-plugin',
         'sqlalchemy',
