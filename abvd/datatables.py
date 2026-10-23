@@ -69,14 +69,19 @@ class CognacyCol(Col):
                         common.ValueSet.parameter == param))
                 ))
             ).options(joinedload(Cognateset.cognates)))
-            self.choices = [(int(cs.id.split('-')[-1]), len(cs.cognates)) for cs in self.choices if 'L' not in cs.id]
-            self.choices = sorted(self.choices, key=lambda i: i[0])
+            choices = []
+            for cs in self.choices:
+                try:
+                    choices.append((int(cs.id.split('-')[-1]), len(cs.cognates)))
+                except ValueError:
+                    pass
+            self.choices = sorted(choices, key=lambda i: i[0])
             self.choices = [f'{i[0]} ({i[1]})' for i in self.choices]
 
     def format(self, item):
         """Link to individual Cognateset pages!"""
         res = []
-        for cog in sorted(item.cognates, key=lambda cog: int(cog.cognateset.id.split('-')[-1])):
+        for cog in sorted(item.cognates, key=lambda cog: int(cog.cognateset.id.split('-')[-1].replace('x', ''))):
             label = cog.cognateset.id.split('-')[-1]
             if cog.doubt:
                 label += '?'
