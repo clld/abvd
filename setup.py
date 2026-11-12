@@ -24,12 +24,15 @@ setup(
         'clld-glottologfamily-plugin',
         'sqlalchemy',
         'waitress',
-        'setuptools<81',
+        'setuptools<82',
     ],
     extras_require={
         'dev': [
             'flake8',
             'tox',
+        ],
+        'initdb': [
+            'psycopg2',
         ],
         'test': [
             'psycopg2',
