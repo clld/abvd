@@ -11,7 +11,7 @@ from clldutils.misc import slug
 from clldutils import color
 from pycldf import Sources
 from clld_cognacy_plugin.models import Cognate, Cognateset
-from nameparser import HumanName
+import nameparser
 from clld_glottologfamily_plugin.util import load_families
 from pyglottolog import Glottolog
 from markdown import markdown
@@ -28,10 +28,10 @@ def md(s):
 
 
 def contributor(data, n):
-    name = HumanName(n)
+    name = nameparser.parse(n)
     kw = dict(
-        id=slug('{0}{1}'.format(name.last, name.first or name.title)),
-        name='{1} {0}'.format(name.last, name.first or name.title),
+        id=slug('{0}{1}'.format(name.family, name.given or name.title)),
+        name='{1} {0}'.format(name.family, name.given or name.title),
     )
     c = data['Contributor'].get(kw['id'])
     if not c:

@@ -33,6 +33,7 @@ setup(
         ],
         'initdb': [
             'psycopg2',
+            'nameparser>=2.0',
         ],
         'test': [
             'psycopg2',
