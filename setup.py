@@ -21,7 +21,7 @@ setup(
         'clld>=9.2.1',
         'clldmpg>=4.5',
         'clld-cognacy-plugin>=1.0',
-        'clld-glottologfamily-plugin',
+        'clld-glottologfamily-plugin>=5.0',
         'sqlalchemy',
         'waitress',
         'setuptools<82',
