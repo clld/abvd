@@ -25,6 +25,7 @@ setup(
         'sqlalchemy',
         'waitress',
         'setuptools<82',
+        'psycopg2',
     ],
     extras_require={
         'dev': [
@@ -32,7 +33,7 @@ setup(
             'tox',
         ],
         'initdb': [
-            'psycopg2',
+            'clld-glottologfamily-plugin[initdb]',
             'nameparser>=2.0',
         ],
         'test': [
