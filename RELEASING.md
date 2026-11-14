@@ -26,3 +26,10 @@ Store a db dump:
 pg_dump -xO --compress gzip:9 abvd > abvd.sql.gz
 ```
 
+## Updating translations
+
+```shell
+pybabel extract --add-comments TRANSLATORS: --output-file abvd/locale/abvd.pot --width 80 abvd
+pybabel update --domain clld --input-file abvd/locale/abvd.pot --output-dir abvd/locale/ --previous
+pybabel compile --domain clld --directory abvd/locale/ --statistics
+```
