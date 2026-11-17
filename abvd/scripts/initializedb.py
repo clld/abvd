@@ -2,20 +2,18 @@ import mimetypes
 from datetime import date
 from collections import Counter
 
-from sqlalchemy.orm import joinedload, aliased
+from sqlalchemy.orm import joinedload
 from clld.cliutil import Data, add_language_codes, bibtex2source
 from clld.db.meta import DBSession
 from clld.db.models import common
 from clld.lib import bibtex
 from clldutils.misc import slug
 from clldutils import color
-from pycldf import Sources
 from clld_cognacy_plugin.models import Cognate, Cognateset
-import nameparser
 from clld_glottologfamily_plugin.util import load_families
 from pyglottolog import Glottolog
+import nameparser
 from markdown import markdown
-from csvw import metadata
 
 import abvd
 from abvd import models
@@ -66,7 +64,7 @@ def main(args):
     DBSession.add(common.Config(key='about', value=about, jsondata=url_map))
 
     for name in ['Simon Greenhill', 'Robert Blust', 'Russell Gray']:
-        common.Editor(contributor=contributor(data, name), dataset=dataset)
+        DBSession.add(common.Editor(contributor=contributor(data, name), dataset=dataset))
 
     for rec in bibtex.Database.from_file(args.cldf.bibpath, lowercase=True):
         data.add(common.Source, rec.id, _obj=bibtex2source(rec))
@@ -135,7 +133,7 @@ def main(args):
                 jsondata=dict(type='checkedby'),
             ))
         for sid in wl['Source']:
-            common.ContributionReference(contribution=c, source=data['Source'][sid])
+            DBSession.add(common.ContributionReference(contribution=c, source=data['Source'][sid]))
 
     for param in args.cldf['ParameterTable']:
         data.add(
