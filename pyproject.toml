@@ -39,7 +39,7 @@ Homepage = "https://github.com/clld/abvd"
 
 [project.optional-dependencies]
 initdb = [
-    "pyglottolog>=4.0",
+    "pyglottolog>=5.0",
     "clld-glottologfamily-plugin[initdb]",
     "nameparser>=2.0",
 ]
