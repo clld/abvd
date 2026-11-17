@@ -82,6 +82,9 @@ def main(args):
         l = data.add(
             models.Variety, lang['ID'],
             id=lang['ID'],
+            #
+            # FIXME: take local name! Store Glottolog Name in addition?
+            #
             name=glang.name if glang else lang['Name'],
             latitude=lang['Latitude'],
             longitude=lang['Longitude'],
@@ -148,12 +151,13 @@ def main(args):
     f2c = {}
     for row in args.cldf['FormTable']:
         f2c[row['ID']] = data['Concept'][row['Parameter_ID']].name
-        vs = data['ValueSet'].get((row['Language_ID'], row['Parameter_ID'], row['Contribution_ID']))
+        vsid = (row['Language_ID'], row['Parameter_ID'], row['Contribution_ID'])
+        vs = data['ValueSet'].get(vsid)
         if not vs:
             vs = data.add(
                 common.ValueSet,
                 (row['Language_ID'], row['Parameter_ID'], row['Contribution_ID']),
-                id='{0}-{1}'.format(row['Language_ID'], row['Parameter_ID']),
+                id='{}-{}-{}'.format(*vsid),
                 language=cid2l[row['Language_ID']],
                 parameter=data['Concept'][row['Parameter_ID']],
                 contribution=data['Wordlist'][row['Contribution_ID']],
