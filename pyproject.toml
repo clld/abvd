@@ -26,7 +26,7 @@ classifiers = [
     "Programming Language :: Python :: 3.15",
 ]
 dependencies = [
-    "clld>=12.0",
+    "clld>=13.0",
     "clldmpg>=4.5",
     "clld-cognacy-plugin>=2.0",
     "clld-glottologfamily-plugin>=5.0",
@@ -127,7 +127,6 @@ addopts = [
 ]
 filterwarnings = [
     "ignore::sqlalchemy.exc.SAWarning",
-    "ignore::sqlalchemy.exc.RemovedIn20Warning",
 ]
 markers = ["selenium: webtest using selenium"]
 
