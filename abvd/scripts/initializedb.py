@@ -148,15 +148,15 @@ def main(args):
     f2c = {}
     for row in args.cldf['FormTable']:
         f2c[row['ID']] = data['Concept'][row['Parameter_ID']].name
-        vs = data['ValueSet'].get((row['Language_ID'], row['Parameter_ID']))
+        vs = data['ValueSet'].get((row['Language_ID'], row['Parameter_ID'], row['Contribution_ID']))
         if not vs:
             vs = data.add(
                 common.ValueSet,
-                (row['Language_ID'], row['Parameter_ID']),
+                (row['Language_ID'], row['Parameter_ID'], row['Contribution_ID']),
                 id='{0}-{1}'.format(row['Language_ID'], row['Parameter_ID']),
                 language=cid2l[row['Language_ID']],
                 parameter=data['Concept'][row['Parameter_ID']],
-                contribution=data['Wordlist'][row['Language_ID']],
+                contribution=data['Wordlist'][row['Contribution_ID']],
             )
         v = data.add(
             models.Word,
